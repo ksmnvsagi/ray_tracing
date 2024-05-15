@@ -1,5 +1,5 @@
 #include "hittable_list.cuh"
-__device__ hittable_list::hittable_list(hittable** objects, int size):objects(objects), size(size) {
+__device__ hittable_list::hittable_list(hittable** objects, int size):objects(objects), size(size), last(0) {
 
 }
 __device__ bool hittable_list::hit(const ray& r, float t_min, float t_max, hit_record& record) const {
@@ -14,4 +14,12 @@ __device__ bool hittable_list::hit(const ray& r, float t_min, float t_max, hit_r
         }
     }
     return hit_any;
+}
+__device__ aabb hittable_list::bounding_box() const {
+    return bbox;
+}
+__device__ void hittable_list::add(hittable* object) {
+    if (last==size) return;
+    *(objects + (last++)) = object;
+    bbox = aabb(bbox, object->bounding_box());
 }

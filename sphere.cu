@@ -1,6 +1,6 @@
 #include "sphere.cuh"
 __device__ sphere::sphere(const point3& center, float radius, material* mat):center(center), radius(radius), mat(mat) {
-
+    bbox = aabb(center - vec3{radius, radius, radius}, center + vec3{radius, radius, radius});
 }
 
 __device__ bool sphere::hit(const ray& r, float t_min, float t_max, hit_record& record) const {
@@ -22,4 +22,8 @@ __device__ bool sphere::hit(const ray& r, float t_min, float t_max, hit_record& 
     record.front_face = dot(r.dir(), record.normal) < 0;
     record.mat = mat;
     return true;
+}
+
+__device__ aabb sphere::bounding_box() const {
+    return bbox;
 }

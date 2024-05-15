@@ -4,7 +4,7 @@
 #include "camera.cuh"
 #include "material.cuh"
 
-__global__ void render(camera cam, color* buff, hittable** world, curandState* rand_states) {
+__global__ void render(camera cam, color* buff, hittable_list** world, curandState* rand_states) {
     for (int y = threadIdx.y + blockIdx.y * blockDim.y; y<cam.image_height; y+=blockDim.y*gridDim.y) {
         for (int x = threadIdx.x + blockIdx.x * blockDim.x; x<cam.image_width; x+=blockDim.x*gridDim.x) {
             int index = x + y*cam.image_width;
@@ -22,39 +22,39 @@ __global__ void render(camera cam, color* buff, hittable** world, curandState* r
     }
 }
 
-__global__ void create_world(hittable** list, hittable** world, curandState* rand_state) {
+__global__ void create_world(hittable** list, hittable_list** world, curandState* rand_state) {
     if (threadIdx.x == 0 && blockIdx.x == 0) {
-        *(list) = new sphere(vec3(0.0f,-1000.0f,-1.0f), 1000.0f,
-                             new lambertian(vec3(0.5f, 0.5f, 0.5f))); // ground
+        *world = new hittable_list(list, 22*22+1+3);
+        (*world)->add(new sphere(vec3(0.0f,-1000.0f,-1.0f), 1000.0f,
+                                 new lambertian(vec3(0.5f, 0.5f, 0.5f)))); // ground
         int i = 1;
         for (int a = -11; a < 11; a++) {
             for (int b = -11; b < 11; b++) {
                 float choose_mat = curand_uniform(rand_state);
                 vec3 center(a+curand_uniform(rand_state),0.2f,b+curand_uniform(rand_state));
                 if (choose_mat < 0.8f) {
-                    *(list+(i++)) = new sphere(center, 0.2,
-                                               new lambertian(vec3(curand_uniform(rand_state)*curand_uniform(rand_state),
-                                                                   curand_uniform(rand_state)*curand_uniform(rand_state),
-                                                                   curand_uniform(rand_state)*curand_uniform(rand_state))));
+                    (*world)->add(new sphere(center, 0.2,
+                                             new lambertian(vec3(curand_uniform(rand_state)*curand_uniform(rand_state),
+                                                                 curand_uniform(rand_state)*curand_uniform(rand_state),
+                                                                 curand_uniform(rand_state)*curand_uniform(rand_state)))));
                 } else if (choose_mat < 0.95f) {
-                    *(list+(i++)) = new sphere(center, 0.2f,
+                    (*world)->add(new sphere(center, 0.2f,
                                                new metal(vec3(0.5f*(1.0f+curand_uniform(rand_state)),
                                                               0.5f*(1.0f+curand_uniform(rand_state)),
                                                               0.5f*(1.0f+curand_uniform(rand_state))),
-                                                         0.5f*curand_uniform(rand_state)));
+                                                         0.5f*curand_uniform(rand_state))));
                 } else {
-                    *(list+(i++)) = new sphere(center, 0.2f, new dielectric(1.5f));
+                    (*world)->add(new sphere(center, 0.2f, new dielectric(1.5f)));
                 }
             }
         }
-        *(list+(i++)) = new sphere(vec3(0, 1,0),  1.0, new dielectric(1.5));
-        *(list+(i++)) = new sphere(vec3(-4, 1, 0), 1.0, new lambertian(vec3(0.4, 0.2, 0.1)));
-        *(list+(i++)) = new sphere(vec3(4, 1, 0),  1.0, new metal(vec3(0.7, 0.6, 0.5), 0.0));
-        *world = new hittable_list(list, 22*22+1+3);
+        (*world)->add(new sphere(vec3(0, 1,0),  1.0, new dielectric(1.5)));
+        (*world)->add(new sphere(vec3(-4, 1, 0), 1.0, new lambertian(vec3(0.4, 0.2, 0.1))));
+        (*world)->add(new sphere(vec3(4, 1, 0),  1.0, new metal(vec3(0.7, 0.6, 0.5), 0.0)));
     }
 }
 
-__global__ void free_world(hittable** list, hittable** world) {
+__global__ void free_world(hittable** list, hittable_list** world) {
     for (int i=0; i<22*22+3+1; i++) delete *(list+i);
     delete *world;
 }
@@ -96,7 +96,7 @@ int main() {
     // world creation (must be done on the GPU due to virtual functions)
     hittable** list;
     cudaCheck(cudaMalloc((void**)&list, (22*22+1+3)*sizeof(hittable*)));
-    hittable** world;
+    hittable_list** world;
     cudaCheck(cudaMalloc((void**)&world, sizeof(hittable*)));
     camera cam(1.5f, 1200, point3{13,2,3}, point3{0, 0, 0}, 30, 10);;
     create_world<<<1,1>>>(list, world, rand_states);
