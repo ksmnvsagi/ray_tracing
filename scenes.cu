@@ -41,3 +41,9 @@ __device__ void checker_spheres(int size, hittable** list, hittable_list** world
     (*world)->add(new sphere(vec3(0,10, 0), 10.0f, new lambertian(checker)));
     *node = new bvh(world, rand_state);
 }
+
+__device__ void earth(int size, hittable** list, hittable_list** world, bvh** node, image* img, curandState* rand_state) {
+    *world = new hittable_list(list, size);
+    (*world)->add(new sphere(point3(0,0,0), 2, new lambertian(new image_texture(*img))));
+    *node = new bvh(world, rand_state);
+}

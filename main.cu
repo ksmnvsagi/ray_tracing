@@ -20,10 +20,11 @@ __global__ void render(camera cam, color* buff, bvh** node, curandState* rand_st
     }
 }
 
-__global__ void create_world(int size, hittable** list, hittable_list** world, bvh** node, curandState* rand_state) {
+__global__ void create_world(int size, hittable** list, hittable_list** world, bvh** node, image* img, curandState* rand_state) {
     if (threadIdx.x == 0 && blockIdx.x == 0) {
 //        global(size, list, world, node, rand_state);
-        checker_spheres(size, list, world, node, rand_state);
+//        checker_spheres(size, list, world, node, rand_state);
+        earth(size, list, world, node, img, rand_state);
     }
 }
 
@@ -81,7 +82,11 @@ int main() {
     bvh** node;
     cudaCheck(cudaMalloc((void**)&node, sizeof(bvh*)));
     camera cam(1.5f, 1200, point3{13, 2, 3}, point3{0, 0, 0}, 30, 10);
-    create_world<<<1,1>>>(22*22+3+1, list, world, node, rand_states);
+    image host_earth_texture("..\\earthmap.jpg");
+    image* dev_earth_texture;
+    cudaCheck(cudaMalloc((void**)&dev_earth_texture, sizeof(image)));
+    cudaCheck(cudaMemcpy(dev_earth_texture, &host_earth_texture, sizeof(image), cudaMemcpyHostToDevice));
+    create_world<<<1,1>>>(1, list, world, node, dev_earth_texture, rand_states);
 
     // render
     cudaCheck(cudaEventRecord(start));
@@ -101,7 +106,7 @@ int main() {
     for (int i=0; i<num_pixels; i++) write_color(output, host_buff[i]);
     output.close();
     // cleanup
-    free_world<<<1,1>>>(2, list, world, node);
+    free_world<<<1,1>>>(1, list, world, node);
     cudaCheck(cudaGetLastError());
     cudaCheck(cudaDeviceSynchronize());
     cudaCheck(cudaFree(dev_buff));
