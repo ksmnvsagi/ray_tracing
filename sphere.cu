@@ -21,9 +21,17 @@ __device__ bool sphere::hit(const ray& r, float t_min, float t_max, hit_record& 
     record.normal = (record.p - center) / radius;
     record.front_face = dot(r.dir(), record.normal) < 0;
     record.mat = mat;
+    get_uv(record.normal, record.u, record.v);
     return true;
 }
 
 __device__ aabb sphere::bounding_box() const {
     return bbox;
+}
+
+__device__ void sphere::get_uv(const point3 p, float& u, float& v) const {
+    float theta = acos(-p.y());
+    float phi = atan2(-p.z(), p.x()) + M_PI;
+    u = phi/(2*M_PI);
+    v = theta/M_PI;
 }

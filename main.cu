@@ -1,9 +1,6 @@
 #include "config.cuh"
-#include "hittable_list.cuh"
-#include "sphere.cuh"
 #include "camera.cuh"
-#include "material.cuh"
-#include "bvh.cuh"
+#include "scenes.cuh"
 
 __global__ void render(camera cam, color* buff, bvh** node, curandState* rand_states) {
     for (int y = threadIdx.y + blockIdx.y * blockDim.y; y<cam.image_height; y+=blockDim.y*gridDim.y) {
@@ -23,43 +20,15 @@ __global__ void render(camera cam, color* buff, bvh** node, curandState* rand_st
     }
 }
 
-__global__ void create_world(hittable** list, hittable_list** world, bvh** node, curandState* rand_state) {
+__global__ void create_world(int size, hittable** list, hittable_list** world, bvh** node, curandState* rand_state) {
     if (threadIdx.x == 0 && blockIdx.x == 0) {
-        *world = new hittable_list(list, 22*22+1+3);
-//        (*world)->add(new sphere(vec3(0.0f,-1000.0f, 0.0f), 1000.0f,
-//                                 new lambertian(vec3(0.5f, 0.5f, 0.5f)))); // ground
-        texture* checker = new checker_texture(0.32f, color{0.2f, 0.3f, 0.1f}, color{0.9f, 0.9f, 0.9f});
-        (*world)->add(new sphere(vec3(0.0f,-1000.0f, 0.0f), 1000.0f,
-                                 new lambertian(checker))); // ground
-        for (int a = -11; a < 11; a++) {
-            for (int b = -11; b < 11; b++) {
-                float choose_mat = curand_uniform(rand_state);
-                vec3 center(a + 0.9f*curand_uniform(rand_state), 0.2f, b + 0.9f*curand_uniform(rand_state));
-                if (choose_mat < 0.8f) {
-                    (*world)->add(new sphere(center, 0.2f,
-                                             new lambertian(vec3(curand_uniform(rand_state)*curand_uniform(rand_state),
-                                                                 curand_uniform(rand_state)*curand_uniform(rand_state),
-                                                                 curand_uniform(rand_state)*curand_uniform(rand_state)))));
-                } else if (choose_mat < 0.95f) {
-                    (*world)->add(new sphere(center, 0.2f,
-                                               new metal(vec3(0.5f*(1.0f+curand_uniform(rand_state)),
-                                                              0.5f*(1.0f+curand_uniform(rand_state)),
-                                                              0.5f*(1.0f+curand_uniform(rand_state))),
-                                                                            curand_uniform(rand_state))));
-                } else {
-                    (*world)->add(new sphere(center, 0.2f, new dielectric(1.5f)));
-                }
-            }
-        }
-        (*world)->add(new sphere(vec3(0, 1,0), 1.0f, new dielectric(1.5f)));
-        (*world)->add(new sphere(vec3(-4, 1, 0), 1.0f, new lambertian(vec3(0.4f, 0.2f, 0.1f))));
-        (*world)->add(new sphere(vec3(4, 1, 0), 1.0f, new metal(vec3(0.7f, 0.6f, 0.5f), 0.0f)));
-        *node = new bvh(world, rand_state);
+//        global(size, list, world, node, rand_state);
+        checker_spheres(size, list, world, node, rand_state);
     }
 }
 
-__global__ void free_world(hittable** list, hittable_list** world, bvh** node) {
-    for(int i=0; i < 22*22+1+3; i++) {
+__global__ void free_world(int size, hittable** list, hittable_list** world, bvh** node) {
+    for(int i=0; i < size; i++) {
         delete ((sphere*)list[i])->mat;
         delete list[i];
     }
@@ -106,13 +75,13 @@ int main() {
 
     // world creation (must be done on the GPU due to virtual functions)
     hittable** list;
-    cudaCheck(cudaMalloc((void**)&list, (22*22+1+3)*sizeof(hittable*)));
+    cudaCheck(cudaMalloc((void**)&list, (2)*sizeof(hittable*)));
     hittable_list** world;
     cudaCheck(cudaMalloc((void**)&world, sizeof(hittable*)));
     bvh** node;
     cudaCheck(cudaMalloc((void**)&node, sizeof(bvh*)));
     camera cam(1.5f, 1200, point3{13, 2, 3}, point3{0, 0, 0}, 30, 10);
-    create_world<<<1,1>>>(list, world, node, rand_states);
+    create_world<<<1,1>>>(22*22+3+1, list, world, node, rand_states);
 
     // render
     cudaCheck(cudaEventRecord(start));
@@ -132,7 +101,7 @@ int main() {
     for (int i=0; i<num_pixels; i++) write_color(output, host_buff[i]);
     output.close();
     // cleanup
-    free_world<<<1,1>>>(list, world, node);
+    free_world<<<1,1>>>(2, list, world, node);
     cudaCheck(cudaGetLastError());
     cudaCheck(cudaDeviceSynchronize());
     cudaCheck(cudaFree(dev_buff));
