@@ -3,6 +3,7 @@
 #include "hittable.cuh"
 #include "ray.cuh"
 #include "hittable_list.cuh"
+#include "bvh.cuh"
 
 class camera {
 public:
@@ -23,5 +24,5 @@ public:
 
     __device__ __host__ camera(float aspect_ratio, int image_width, point3 center, point3 lookat,
                                float vfov = 90.0f, int num_samples = 100);
-    __device__ color ray_color(const ray& r, hittable_list* world, curandState* rand_state) const;
+    __device__ color ray_color(const ray& r, bvh* node, curandState* rand_state) const;
 };

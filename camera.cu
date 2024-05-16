@@ -25,12 +25,12 @@ __device__ __host__ camera::camera(float aspect_ratio, int image_width, point3 c
     delta_y = viewport_y/image_height;
     pixel00 = center - focal_length*w - viewport_x/2.f - viewport_y/2.f + 0.5f*(delta_x+delta_y);
 }
-__device__ color camera::ray_color(const ray& r, hittable_list* world, curandState* rand_state) const {
+__device__ color camera::ray_color(const ray& r, bvh* node, curandState* rand_state) const {
     ray curr_ray = r;
     color curr_attenuation = color(1.0f, 1.0f, 1.0f);
     for (int i=0; i<50; i++) {
         hit_record record;
-        if ((world)->hit(curr_ray, 0.001f, FLT_MAX, record)) {
+        if ((node)->hit(curr_ray, 0.001f, FLT_MAX, record)) {
             ray scattered;
             color attenuation;
             if (record.mat->scatter(curr_ray, record, attenuation, scattered, rand_state)) {

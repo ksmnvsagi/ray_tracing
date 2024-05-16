@@ -3,8 +3,9 @@
 #include "sphere.cuh"
 #include "camera.cuh"
 #include "material.cuh"
+#include "bvh.cuh"
 
-__global__ void render(camera cam, color* buff, hittable_list** world, curandState* rand_states) {
+__global__ void render(camera cam, color* buff, bvh** node, curandState* rand_states) {
     for (int y = threadIdx.y + blockIdx.y * blockDim.y; y<cam.image_height; y+=blockDim.y*gridDim.y) {
         for (int x = threadIdx.x + blockIdx.x * blockDim.x; x<cam.image_width; x+=blockDim.x*gridDim.x) {
             int index = x + y*cam.image_width;
@@ -15,14 +16,14 @@ __global__ void render(camera cam, color* buff, hittable_list** world, curandSta
                 vec3 ray_dir = pixel + 0.5f*(cam).delta_x * cudaRand(&my_state, -1, 1) +
                                0.5f*(cam).delta_y*cudaRand(&my_state, -1, 1) - (cam).center;
                 ray r((cam).center,ray_dir);
-                final_color+=(cam).ray_color(r, *world, &my_state);
+                final_color+=(cam).ray_color(r, *node, &my_state);
             }
             buff[index] = final_color/(float)(cam).num_samples;
         }
     }
 }
 
-__global__ void create_world(hittable** list, hittable_list** world, curandState* rand_state) {
+__global__ void create_world(hittable** list, hittable_list** world, bvh** node, curandState* rand_state) {
     if (threadIdx.x == 0 && blockIdx.x == 0) {
         *world = new hittable_list(list, 22*22+1+3);
         (*world)->add(new sphere(vec3(0.0f,-1000.0f,-1.0f), 1000.0f,
@@ -50,15 +51,17 @@ __global__ void create_world(hittable** list, hittable_list** world, curandState
         (*world)->add(new sphere(vec3(0, 1,0),  1.0, new dielectric(1.5)));
         (*world)->add(new sphere(vec3(-4, 1, 0), 1.0, new lambertian(vec3(0.4, 0.2, 0.1))));
         (*world)->add(new sphere(vec3(4, 1, 0),  1.0, new metal(vec3(0.7, 0.6, 0.5), 0.0)));
+        *node = new bvh(world, rand_state);
     }
 }
 
-__global__ void free_world(hittable** list, hittable_list** world) {
+__global__ void free_world(hittable** list, hittable_list** world, bvh** node) {
     for(int i=0; i < 22*22+1+3; i++) {
         delete ((sphere*)list[i])->mat;
         delete list[i];
     }
     delete *world;
+    delete *node;
 }
 
 __global__ void create_rand(int WIDTH, int HEIGHT, curandState* rand_states) {
@@ -71,6 +74,9 @@ __global__ void create_rand(int WIDTH, int HEIGHT, curandState* rand_states) {
 }
 
 int main() {
+    size_t stack_size = 8192;
+    cudaDeviceSetLimit(cudaLimitStackSize, stack_size);
+
     const int WIDTH = 1200;
     const int HEIGHT = 800;
     // query device
@@ -100,12 +106,14 @@ int main() {
     cudaCheck(cudaMalloc((void**)&list, (22*22+1+3)*sizeof(hittable*)));
     hittable_list** world;
     cudaCheck(cudaMalloc((void**)&world, sizeof(hittable*)));
-    camera cam(1.5f, 1200, point3{13,2,3}, point3{0, 0, 0}, 30, 10);;
-    create_world<<<1,1>>>(list, world, rand_states);
+    bvh** node;
+    cudaCheck(cudaMalloc((void**)&node, sizeof(bvh*)));
+    camera cam(1.5f, 1200, point3{13, 2, 3}, point3{0, 0, 0}, 30, 10);
+    create_world<<<1,1>>>(list, world, node, rand_states);
 
     // render
     cudaCheck(cudaEventRecord(start));
-    render<<<blocks, threads>>>(cam, dev_buff, world, rand_states);
+    render<<<blocks, threads>>>(cam, dev_buff, node, rand_states);
     cudaCheck(cudaEventRecord(stop));
     cudaCheck(cudaEventSynchronize(stop));
     float elapsed;
@@ -121,7 +129,7 @@ int main() {
     for (int i=0; i<num_pixels; i++) write_color(output, host_buff[i]);
     output.close();
     // cleanup
-    free_world<<<1,1>>>(list, world);
+    free_world<<<1,1>>>(list, world, node);
     cudaCheck(cudaGetLastError());
     cudaCheck(cudaDeviceSynchronize());
     cudaCheck(cudaFree(dev_buff));

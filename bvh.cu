@@ -29,9 +29,7 @@ __device__ bvh::bvh(hittable_list** world, curandState* rand_state, size_t start
         left = *((*world)->objects + start);
         right = *((*world)->objects + start+1);
     } else {
-        thrust::device_ptr<hittable*> dev_ptr((*world)->objects + start);
-        thrust::sort(dev_ptr, dev_ptr + object_span, comparator);
-
+        thrust::sort(((*world)->objects + start), ((*world)->objects + end), comparator);
         size_t mid = start + object_span/2;
         left = new bvh(world, rand_state, start, mid);
         right = new bvh(world, rand_state, mid, end);
