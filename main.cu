@@ -15,7 +15,7 @@ __global__ void render(camera cam, color* buff, hittable_list** world, curandSta
                 vec3 ray_dir = pixel + 0.5f*(cam).delta_x * cudaRand(&my_state, -1, 1) +
                                0.5f*(cam).delta_y*cudaRand(&my_state, -1, 1) - (cam).center;
                 ray r((cam).center,ray_dir);
-                final_color+=(cam).ray_color(r, world, &my_state);
+                final_color+=(cam).ray_color(r, *world, &my_state);
             }
             buff[index] = final_color/(float)(cam).num_samples;
         }
@@ -27,13 +27,12 @@ __global__ void create_world(hittable** list, hittable_list** world, curandState
         *world = new hittable_list(list, 22*22+1+3);
         (*world)->add(new sphere(vec3(0.0f,-1000.0f,-1.0f), 1000.0f,
                                  new lambertian(vec3(0.5f, 0.5f, 0.5f)))); // ground
-        int i = 1;
         for (int a = -11; a < 11; a++) {
             for (int b = -11; b < 11; b++) {
                 float choose_mat = curand_uniform(rand_state);
-                vec3 center(a+curand_uniform(rand_state),0.2f,b+curand_uniform(rand_state));
+                vec3 center(a+curand_uniform(rand_state),0.2f, b+curand_uniform(rand_state));
                 if (choose_mat < 0.8f) {
-                    (*world)->add(new sphere(center, 0.2,
+                    (*world)->add(new sphere(center, 0.2f,
                                              new lambertian(vec3(curand_uniform(rand_state)*curand_uniform(rand_state),
                                                                  curand_uniform(rand_state)*curand_uniform(rand_state),
                                                                  curand_uniform(rand_state)*curand_uniform(rand_state)))));
@@ -55,7 +54,10 @@ __global__ void create_world(hittable** list, hittable_list** world, curandState
 }
 
 __global__ void free_world(hittable** list, hittable_list** world) {
-    for (int i=0; i<22*22+3+1; i++) delete *(list+i);
+    for(int i=0; i < 22*22+1+3; i++) {
+        delete ((sphere*)list[i])->mat;
+        delete list[i];
+    }
     delete *world;
 }
 
