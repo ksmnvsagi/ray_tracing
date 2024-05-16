@@ -12,6 +12,8 @@ struct hit_record {
     float t;            // t-value at which ray intersects
     bool front_face;
     material* mat;
+    float u; // surface coordinates
+    float v;
 };
 
 class hittable {

@@ -3,12 +3,15 @@
 __device__ lambertian::lambertian(const color& albedo):albedo(albedo) {
 
 }
+__device__ lambertian::lambertian(texture* tex):tex(tex) {
+
+}
 __device__ bool lambertian::scatter(const ray& r, const hit_record& record, color& attenuation,
                                     ray& scattered, curandState* rand_state) const {
     vec3 scattered_dir = record.normal+randUnit(rand_state);
     if (near_zero(scattered_dir)) scattered_dir = record.normal;
     scattered = ray(record.p, scattered_dir);
-    attenuation = albedo;
+    attenuation = tex ? tex->value(record.u, record.v, record.p) : albedo;
     return true;
 }
 

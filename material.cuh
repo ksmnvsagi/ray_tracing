@@ -1,6 +1,7 @@
 #pragma once
 #include "config.cuh"
 #include "hittable.cuh"
+#include "texture.cuh"
 
 struct hit_record;
 
@@ -13,10 +14,12 @@ public:
 class lambertian: public material {
 public:
     __device__ lambertian(const color& albedo);
+    __device__ lambertian(texture* tex);
     __device__ bool scatter(const ray& r, const hit_record& record, color& attenuation,
                             ray& scattered, curandState* rand_state) const override;
 private:
     color albedo;
+    texture* tex;
 };
 
 class metal: public material {
