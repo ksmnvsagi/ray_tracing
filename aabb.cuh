@@ -10,6 +10,8 @@ struct interval {
     __host__ __device__ interval expand(float d) const;
     __host__ __device__ float size() const;
 };
+__host__ __device__ interval operator+(const interval& inter, float displace);
+__host__ __device__ interval operator+(float displace, const interval& inter);
 
 class aabb {
 public:
@@ -22,3 +24,6 @@ public:
 private:
     interval x, y, z;
 };
+
+__host__ __device__ aabb operator+(const aabb& bbox, const vec3& offset);
+__host__ __device__ aabb operator+(const vec3& offset, const aabb& bbox);

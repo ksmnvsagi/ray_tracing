@@ -1,5 +1,7 @@
 #pragma once
 #include "hittable.cuh"
+#include "hittable_list.cuh"
+#include "quad.cuh"
 
 class quad: public hittable {
 public:
@@ -18,3 +20,5 @@ private:
     float D;
     vec3 w;
 };
+
+__device__ hittable_list* create_box(const point3& a, const point3& b, material* mat);

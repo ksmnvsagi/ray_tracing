@@ -1,4 +1,6 @@
 #include "quad.cuh"
+#include "hittable_list.cuh"
+
 __device__ quad::quad(const point3& Q, const vec3& u, const vec3& v, material* mat): Q(Q), u(u), v(v), mat(mat) {
     vec3 n = cross(u, v);
     normal = unit(n);
@@ -38,4 +40,23 @@ __device__ bool quad::is_interior(float a, float b, hit_record& record) const {
     record.u = a;
     record.v = b;
     return true;
+}
+
+__device__ hittable_list* create_box(const point3& a, const point3& b, material* mat) {
+    hittable** list = (hittable**)malloc(6);
+    hittable_list* sides = new hittable_list(list, 6);
+    point3 min = point3(fmin(a.x(), b.x()), fmin(a.y(), b.y()), fmin(a.z(), b.z()));
+    point3 max = point3(fmax(a.x(), b.x()), fmax(a.y(), b.y()), fmax(a.z(), b.z()));
+    vec3 dx = vec3(max.x() - min.x(), 0, 0);
+    vec3 dy = vec3(0, max.y() - min.y(), 0);
+    vec3 dz = vec3(0, 0, max.z() - min.z());
+
+    sides->add(new quad(point3(min.x(), min.y(), max.z()),  dx,  dy, mat)); // front
+    sides->add(new quad(point3(max.x(), min.y(), max.z()), -dz,  dy, mat)); // right
+    sides->add(new quad(point3(max.x(), min.y(), min.z()), -dx,  dy, mat)); // back
+    sides->add(new quad(point3(min.x(), min.y(), min.z()),  dz,  dy, mat)); // left
+    sides->add(new quad(point3(min.x(), max.y(), max.z()),  dx, -dz, mat)); // top
+    sides->add(new quad(point3(min.x(), min.y(), min.z()),  dx,  dz, mat)); // bottom
+
+    return sides;
 }

@@ -33,8 +33,8 @@ __global__ void create_world(int size, hittable** list, hittable_list** world, b
 
 __global__ void free_world(int size, hittable** list, hittable_list** world, bvh** node) {
     for(int i=0; i < size; i++) {
-        delete ((quad*)list[i])->mat;
-        delete list[i];
+//        delete ((quad*)list[i])->mat;
+//        delete list[i];
     }
     delete *world;
     delete *node;
@@ -55,7 +55,7 @@ int main() {
 
     const int WIDTH = 600;
     const int HEIGHT = 600;
-    const int WORLD_SIZE = 6;
+    const int WORLD_SIZE = 8;
     // query device
     cudaDeviceProp prop{};
     cudaGetDeviceProperties(&prop, 0);

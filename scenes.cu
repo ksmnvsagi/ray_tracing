@@ -1,5 +1,6 @@
 #include "scenes.cuh"
 #include "quad.cuh"
+#include "instance.cuh"
 
 
 __device__ void global(int size, hittable** list, hittable_list** world, bvh** node, curandState* rand_state) {
@@ -67,5 +68,15 @@ __device__ void empty_cornell(int size, hittable** list, hittable_list** world, 
     (*world)->add(new quad(point3(0,0,0), vec3(555,0,0), vec3(0,0,555), new lambertian(color(0.73f, 0.73f, 0.73f)))); // bottom
     (*world)->add(new quad(point3(555,555,555), vec3(-555,0,0), vec3(0,0,-555), new lambertian(color(0.73f, 0.73f, 0.73f)))); // top
     (*world)->add(new quad(point3(0,0,555), vec3(555,0,0), vec3(0,555,0), new lambertian(color(0.73f, 0.73f, 0.73f)))); // center
+
+    hittable* box1 = create_box(point3(0,0,0), point3(165,330,165), new lambertian(color(0.73f, 0.73f, 0.73f)));
+    box1 = new rotate_y(box1, 15);
+    box1 = new translate(box1, vec3(265,0,295));
+    hittable* box2 = create_box(point3(0,0,0), point3(165,165,165), new lambertian(color(0.73f, 0.73f, 0.73f)));
+    box2 = new rotate_y(box2, -18);
+    box2 = new translate(box2, vec3(130,0,65));
+    (*world)->add(box1);
+    (*world)->add(box2);
+
     *node = new bvh(world, rand_state);
 }

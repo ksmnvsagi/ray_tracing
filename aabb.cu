@@ -15,6 +15,12 @@ __host__ __device__ interval interval::expand(float d) const {
 __host__ __device__ float interval::size() const {
     return max-min;
 }
+__host__ __device__ interval operator+(const interval& inter, float displace) {
+    return interval(inter.min + displace, inter.max + displace);
+}
+__host__ __device__ interval operator+(float displace, const interval& inter) {
+    return inter + displace;
+}
 
 __host__ __device__ aabb::aabb() {
 
@@ -66,4 +72,12 @@ __host__ __device__ bool aabb::hit(const ray& r, interval ray_t) const {
 
     }
     return true;
+}
+
+__host__ __device__ aabb operator+(const aabb& bbox, const vec3& offset) {
+    return aabb(bbox.axis_interval(0) + offset.x(), bbox.axis_interval(1) + offset.y(), bbox.axis_interval(2) + offset.z());
+}
+
+__host__ __device__ aabb operator+(const vec3& offset, const aabb& bbox) {
+    return bbox + offset;
 }

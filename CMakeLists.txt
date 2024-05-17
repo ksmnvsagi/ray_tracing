@@ -31,6 +31,8 @@ add_executable(ray_tracing
         image.cu
         quad.cuh
         quad.cu
+        instance.cu
+        instance.cuh
 )
 set_target_properties(ray_tracing PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 set_target_properties(ray_tracing PROPERTIES CUDA_ARCHITECTURES "86")
