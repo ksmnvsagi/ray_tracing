@@ -86,7 +86,7 @@ int main() {
     bvh** node;
     cudaCheck(cudaMalloc((void**)&node, sizeof(bvh*)));
     // camera
-    camera cam(1.0f, WIDTH, point3(278, 278, -800), point3(278, 278, 0), 40, 10000);
+    camera cam(1.0f, WIDTH, point3(278, 278, -800), point3(278, 278, 0), 40, 1000);
     image host_earth_texture("..\\earthmap.jpg");
     image* dev_earth_texture;
     cudaCheck(cudaMalloc((void**)&dev_earth_texture, sizeof(image)));
