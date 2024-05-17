@@ -33,14 +33,13 @@ __device__ color camera::ray_color(const ray& r, bvh* node, curandState* rand_st
         if ((node)->hit(curr_ray, 0.001f, FLT_MAX, record)) {
             ray scattered;
             color attenuation;
+            color light = record.mat->emit(record.u, record.v, record.p);
             if (record.mat->scatter(curr_ray, record, attenuation, scattered, rand_state)) {
                 curr_ray = scattered;
-                curr_attenuation*=attenuation;
-            } else return vec3{0,0,0};
+                curr_attenuation*=(light+attenuation);
+            } else return curr_attenuation*light;;
         } else {
-            vec3 dir = unit(curr_ray.dir());
-            float a = 0.5f*(dir.y() + 1.0f);
-            return curr_attenuation*((1.0f-a)*color(1.0f, 1.0f, 1.0f) + a*color(0.5f, 0.7f, 1.0f));
+            return curr_attenuation*(background);
         }
     }
     return color{0.0f, 0.0f, 0.0f};

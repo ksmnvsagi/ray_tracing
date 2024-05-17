@@ -26,7 +26,8 @@ __global__ void create_world(int size, hittable** list, hittable_list** world, b
 //        global(size, list, world, node, rand_state);
 //        checker_spheres(size, list, world, node, rand_state);
 //        earth(size, list, world, node, img, rand_state);
-        quads(size, list, world, node, rand_state);
+//        quads(size, list, world, node, rand_state);
+        empty_cornell(size, list, world, node, rand_state);
     }
 }
 
@@ -52,9 +53,9 @@ int main() {
     size_t stack_size = 8192;
     cudaDeviceSetLimit(cudaLimitStackSize, stack_size);
 
-    const int WIDTH = 1200;
-    const int HEIGHT = 800;
-    const int WORLD_SIZE = 5;
+    const int WIDTH = 600;
+    const int HEIGHT = 600;
+    const int WORLD_SIZE = 6;
     // query device
     cudaDeviceProp prop{};
     cudaGetDeviceProperties(&prop, 0);
@@ -85,7 +86,7 @@ int main() {
     bvh** node;
     cudaCheck(cudaMalloc((void**)&node, sizeof(bvh*)));
     // camera
-    camera cam(1.5f, WIDTH, point3{0,0,9}, point3{0, 0, 0}, 80, 10);
+    camera cam(1.0f, WIDTH, point3(278, 278, -800), point3(278, 278, 0), 40, 100);
     image host_earth_texture("..\\earthmap.jpg");
     image* dev_earth_texture;
     cudaCheck(cudaMalloc((void**)&dev_earth_texture, sizeof(image)));

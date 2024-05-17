@@ -7,8 +7,9 @@ struct hit_record;
 
 class material {
 public:
+    __device__ virtual color emit(float u, float v, const point3& p) const;
     __device__ virtual bool scatter(const ray& r, const hit_record& record, color& attenuation,
-                                    ray& scattered, curandState* rand_state) const = 0;
+                                    ray& scattered, curandState* rand_state) const;
 };
 
 class lambertian: public material {
@@ -41,4 +42,13 @@ public:
 private:
     float refraction_index;
     __device__ float schlick(float cosine, float ri) const;
+};
+
+class diffuse_light: public material {
+public:
+    __device__ diffuse_light(const color& emitted_color);
+    __device__ diffuse_light(texture* tex);
+    __device__ color emit(float u, float v, const point3& p) const override;
+private:
+    texture* tex;
 };

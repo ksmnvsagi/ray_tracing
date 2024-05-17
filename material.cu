@@ -1,4 +1,11 @@
 #include "material.cuh"
+__device__ color material::emit(float u, float v, const point3& p) const {
+    return color(0, 0, 0);
+}
+__device__ bool material::scatter(const ray& r, const hit_record& record, color& attenuation,
+                                ray& scattered, curandState* rand_state) const {
+    return false;
+}
 
 __device__ lambertian::lambertian(const color& albedo):albedo(albedo) {
 
@@ -44,9 +51,18 @@ __device__ bool dielectric::scatter(const ray& r, const hit_record& record, colo
     scattered = ray(record.p, scattered_dir);
     return true;
 }
-
 __device__ float dielectric::schlick(float cosine, float ri) const {
     float r0 = (1 - ri)/(1 + ri);
     r0 = r0*r0;
     return r0 + (1-r0)*pow((1 - cosine), 5);
+}
+
+__device__ diffuse_light::diffuse_light(const color& emitted_color):tex(new solid_color(emitted_color)) {
+
+}
+__device__ diffuse_light::diffuse_light(texture* tex):tex(tex) {
+
+}
+__device__ color diffuse_light::emit(float u, float v, const point3& p) const {
+    return tex->value(u, v, p);
 }

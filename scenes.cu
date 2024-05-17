@@ -52,9 +52,20 @@ __device__ void earth(int size, hittable** list, hittable_list** world, bvh** no
 __device__ void quads(int size, hittable** list, hittable_list** world, bvh** node, curandState* rand_state) {
     *world = new hittable_list(list, size);
     (*world)->add(new quad(point3(-3,-2, 5), vec3(0, 0,-4), vec3(0, 4, 0), new lambertian(color(1, 0.2f, 0.2f))));
-    (*world)->add(new quad(point3(-2,-2, 0), vec3(4, 0, 0), vec3(0, 4, 0), new lambertian(color(0.2, 1.0, 0.2))));
+    (*world)->add(new quad(point3(-2,-2, 0), vec3(4, 0, 0), vec3(0, 4, 0), new lambertian(color(0.2, 1.0, 0.2)))); // back
     (*world)->add(new quad(point3( 3,-2, 1), vec3(0, 0, 4), vec3(0, 4, 0), new lambertian(color(0.2, 0.2, 1.0))));
     (*world)->add(new quad(point3(-2, 3, 1), vec3(4, 0, 0), vec3(0, 0, 4), new lambertian(color(1.0, 0.5, 0.0))));
     (*world)->add(new quad(point3(-2,-3, 5), vec3(4, 0, 0), vec3(0, 0,-4), new lambertian(color(0.2, 0.8, 0.8))));
+    *node = new bvh(world, rand_state);
+}
+
+__device__ void empty_cornell(int size, hittable** list, hittable_list** world, bvh** node, curandState* rand_state) {
+    *world = new hittable_list(list, size);
+    (*world)->add(new quad(point3(555,0,0), vec3(0,555,0), vec3(0,0,555), new lambertian(color(0.12f, 0.45f, 0.15f)))); // green
+    (*world)->add(new quad(point3(0,0,0), vec3(0,555,0), vec3(0,0,555), new lambertian(color(0.65f, 0.05f, 0.05f)))); // red
+    (*world)->add(new quad(point3(343, 554, 332), vec3(-130,0,0), vec3(0,0,-105), new diffuse_light(color(15.f, 15.f, 15.f)))); // light
+    (*world)->add(new quad(point3(0,0,0), vec3(555,0,0), vec3(0,0,555), new lambertian(color(0.73f, 0.73f, 0.73f)))); // bottom
+    (*world)->add(new quad(point3(555,555,555), vec3(-555,0,0), vec3(0,0,-555), new lambertian(color(0.73f, 0.73f, 0.73f)))); // top
+    (*world)->add(new quad(point3(0,0,555), vec3(555,0,0), vec3(0,555,0), new lambertian(color(0.73f, 0.73f, 0.73f)))); // center
     *node = new bvh(world, rand_state);
 }

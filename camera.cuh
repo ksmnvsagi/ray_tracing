@@ -21,6 +21,7 @@ public:
     vec3 u;             // vector pointing right from camera
     vec3 v;             // vector pointing up from camera
     vec3 w;             // vector pointing away from lookat point
+    color background = color(0, 0, 0);
 
     __device__ __host__ camera(float aspect_ratio, int image_width, point3 center, point3 lookat,
                                float vfov = 90.0f, int num_samples = 100);
