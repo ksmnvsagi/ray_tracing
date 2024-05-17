@@ -22,10 +22,10 @@ even(new solid_color(c1)), odd(new solid_color(c2)) {
 
 }
 __device__ color checker_texture::value(float u, float v, const point3& p) const {
-    int xInteger = int(floor(inv_scale * p.x()));
-    int yInteger = int(floor(inv_scale * p.y()));
-    int zInteger = int(floor(inv_scale * p.z()));
-    bool isEven = (xInteger + yInteger + zInteger)%2 == 0;
+    int x_int = int(floor(inv_scale * p.x()));
+    int y_int = int(floor(inv_scale * p.y()));
+    int z_int = int(floor(inv_scale * p.z()));
+    bool isEven = (x_int + y_int + z_int)%2 == 0;
     return isEven ? even->value(u, v, p) : odd->value(u, v, p);
 }
 

@@ -30,7 +30,7 @@ __device__ int image::pixel_clamp(int val, int min, int max) const {
     if (val < max) return val;
     return max - 1;
 }
-__host__ const unsigned char image::to_byte(float val) const {
+__host__ unsigned char image::to_byte(float val) const {
     if (val <= 0.0f) return 0;
     if (1.0f <= val) return 255;
     return static_cast<unsigned char>(256.0f * val);

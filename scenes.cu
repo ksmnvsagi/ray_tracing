@@ -1,4 +1,5 @@
 #include "scenes.cuh"
+#include "quad.cuh"
 
 
 __device__ void global(int size, hittable** list, hittable_list** world, bvh** node, curandState* rand_state) {
@@ -45,5 +46,15 @@ __device__ void checker_spheres(int size, hittable** list, hittable_list** world
 __device__ void earth(int size, hittable** list, hittable_list** world, bvh** node, image* img, curandState* rand_state) {
     *world = new hittable_list(list, size);
     (*world)->add(new sphere(point3(0,0,0), 2, new lambertian(new image_texture(*img))));
+    *node = new bvh(world, rand_state);
+}
+
+__device__ void quads(int size, hittable** list, hittable_list** world, bvh** node, curandState* rand_state) {
+    *world = new hittable_list(list, size);
+    (*world)->add(new quad(point3(-3,-2, 5), vec3(0, 0,-4), vec3(0, 4, 0), new lambertian(color(1, 0.2f, 0.2f))));
+    (*world)->add(new quad(point3(-2,-2, 0), vec3(4, 0, 0), vec3(0, 4, 0), new lambertian(color(0.2, 1.0, 0.2))));
+    (*world)->add(new quad(point3( 3,-2, 1), vec3(0, 0, 4), vec3(0, 4, 0), new lambertian(color(0.2, 0.2, 1.0))));
+    (*world)->add(new quad(point3(-2, 3, 1), vec3(4, 0, 0), vec3(0, 0, 4), new lambertian(color(1.0, 0.5, 0.0))));
+    (*world)->add(new quad(point3(-2,-3, 5), vec3(4, 0, 0), vec3(0, 0,-4), new lambertian(color(0.2, 0.8, 0.8))));
     *node = new bvh(world, rand_state);
 }

@@ -7,6 +7,8 @@ struct interval {
     __host__ __device__ interval();
     __host__ __device__ interval(float min, float max);
     __host__ __device__ interval(const interval& a, const interval& b);
+    __host__ __device__ interval expand(float d) const;
+    __host__ __device__ float size() const;
 };
 
 class aabb {

@@ -24,8 +24,10 @@ __device__ bvh::bvh(hittable_list** world, curandState* rand_state, size_t start
                                   : (axis == 1) ? box_y_compare
                                                 : box_z_compare;
     size_t object_span = end - start;
-    if (object_span == 1) left = right = *((*world)->objects + start);
-    else if (object_span == 2) {
+    if (object_span == 1) {
+        left = *((*world)->objects + start);
+        right = *((*world)->objects + start);
+    } else if (object_span == 2) {
         left = *((*world)->objects + start);
         right = *((*world)->objects + start+1);
     } else {
@@ -38,7 +40,6 @@ __device__ bvh::bvh(hittable_list** world, curandState* rand_state, size_t start
 }
 __device__ bool bvh::hit(const ray& r, float t_min, float t_max, hit_record& record) const {
     if (!bbox.hit(r, interval{t_min, t_max})) return false;
-
     bool hit_left = left->hit(r, t_min, t_max, record);
     bool hit_right = right->hit(r, t_min, hit_left ? record.t : t_max, record);
     return hit_left || hit_right;
