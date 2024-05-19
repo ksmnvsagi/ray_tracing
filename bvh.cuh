@@ -14,8 +14,9 @@ __device__ bool box_z_compare(const hittable* a, const hittable* b);
 
 class bvh: public hittable {
 public:
-    __device__ bvh(hittable_list** world, curandState* rand_state);
-    __device__ bvh(hittable_list** world, curandState* rand_state, size_t start, size_t end);
+    __device__ bvh(hittable_list* world, curandState* rand_state);
+    __device__ bvh(hittable_list* world, curandState* rand_state, size_t start, size_t end);
+    __device__ ~bvh();
     __device__ bool hit(const ray& r, float t_min, float t_max, hit_record& record) const override;
     __device__ aabb bounding_box() const override;
 private:

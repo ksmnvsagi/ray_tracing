@@ -21,22 +21,17 @@ __global__ void render(camera cam, color* buff, bvh** node, curandState* rand_st
     }
 }
 
-__global__ void create_world(int size, hittable_list** world, bvh** node, image* img, curandState* rand_state) {
+__global__ void create_world(int size, bvh** node, image* img, curandState* rand_state) {
     if (threadIdx.x == 0 && blockIdx.x == 0) {
-//        global(size, world, node, rand_state);
-//        checker_spheres(size, world, node, rand_state);
-//        earth(size, world, node, img, rand_state);
-//        quads(size, world, node, rand_state);
-        empty_cornell(size, world, node, img, rand_state);
+//        global(size, node, rand_state);
+//        checker_spheres(size, node, rand_state);
+//        earth(size, world, img, rand_state);
+//        quads(size, world, rand_state);
+        empty_cornell(size, node, img, rand_state);
     }
 }
 
-__global__ void free_world(int size, hittable_list** world, bvh** node) {
-    for(int i=0; i < size; i++) {
-//        delete ((quad*)list[i])->mat;
-//        delete list[i];
-    }
-    delete *world;
+__global__ void free_world(int size, bvh** node) {
     delete *node;
 }
 
@@ -51,23 +46,29 @@ __global__ void create_rand(int WIDTH, int HEIGHT, curandState* rand_states) {
 
 int main() {
     // to handle recursion during BVH construction
-    size_t stack_size = 8192;
-    cudaDeviceSetLimit(cudaLimitStackSize, stack_size);
+    cudaDeviceSetLimit(cudaLimitStackSize, 8192);
 
     const unsigned int WIDTH = 600;
     const unsigned int HEIGHT = 600;
     const unsigned int WORLD_SIZE = 8;
+    const float ASPECT_RATIO = 1.0f;
+    const point3 lookat = point3(278, 278, 0);
+    const point3 lookfrom = point3(278, 278, -800);
+    const float vfov = 40.0f;
+    const unsigned int SAMPLES = 100;
+    const int NUM_PIXELS = WIDTH*HEIGHT;
+    camera cam(ASPECT_RATIO, WIDTH, lookfrom, lookat, vfov, SAMPLES);
+
     // query device
     cudaDeviceProp prop{};
     cudaGetDeviceProperties(&prop, 0);
     int SMs = prop.multiProcessorCount;
-    std::cout<<"SMs: "<<prop.multiProcessorCount<<"/nCompute capability: "<<prop.major<<'.'<<prop.minor<<'\n';
+    std::cout<<"SMs: "<<prop.multiProcessorCount<<"\nCompute capability: "<<prop.major<<'.'<<prop.minor<<'\n';
 
-    int num_pixels = WIDTH*HEIGHT;
     // host and device color buffers
-    color* host_buff = (color*)malloc(num_pixels*sizeof(color));
+    color* host_buff = (color*)malloc(NUM_PIXELS*sizeof(color));
     color* dev_buff;
-    cudaCheck(cudaMalloc((void**)&dev_buff, num_pixels*sizeof(color)));
+    cudaCheck(cudaMalloc((void**)&dev_buff, NUM_PIXELS*sizeof(color)));
     cudaEvent_t start;
     cudaEvent_t stop;
     cudaCheck(cudaEventCreate(&start));
@@ -78,21 +79,17 @@ int main() {
 
     // curand init
     curandState* rand_states;
-    cudaCheck(cudaMalloc((void**)&rand_states, num_pixels*sizeof(curandState)));
+    cudaCheck(cudaMalloc((void**)&rand_states, NUM_PIXELS*sizeof(curandState)));
     create_rand<<<blocks, threads>>>(WIDTH, HEIGHT, rand_states);
 
-    // world creation (must be done on the GPU due to virtual functions!)
-    hittable_list** world;
-    cudaCheck(cudaMalloc((void**)&world, sizeof(hittable*)));
+    // world creation (must be done on the GPU due to virtual functions)
     bvh** node;
     cudaCheck(cudaMalloc((void**)&node, sizeof(bvh*)));
-    // camera
-    camera cam(1.0f, WIDTH, point3(278, 278, -800), point3(278, 278, 0), 40, 100);
     image host_earth_texture("..\\earthmap.jpg");
     image* dev_earth_texture;
     cudaCheck(cudaMalloc((void**)&dev_earth_texture, sizeof(image)));
     cudaCheck(cudaMemcpy(dev_earth_texture, &host_earth_texture, sizeof(image), cudaMemcpyHostToDevice));
-    create_world<<<1,1>>>(WORLD_SIZE, world, node, dev_earth_texture, rand_states);
+    create_world<<<1,1>>>(WORLD_SIZE, node, dev_earth_texture, rand_states);
 
     // render
     cudaCheck(cudaEventRecord(start));
@@ -103,20 +100,22 @@ int main() {
     cudaCheck(cudaEventElapsedTime(&elapsed, start, stop));
     std::cout<<"Elapsed time: "<<elapsed<<" ms\n";
     // copy memory back to CPU
-    cudaCheck(cudaMemcpy(host_buff, dev_buff, num_pixels*sizeof(color), cudaMemcpyDeviceToHost));
+    cudaCheck(cudaMemcpy(host_buff, dev_buff, NUM_PIXELS*sizeof(color), cudaMemcpyDeviceToHost));
 
     // output image
     std::ofstream output("../image.ppm");
     output << "P3\n" << WIDTH << ' ' << HEIGHT << "\n255\n";
-    for (int i=0; i<num_pixels; i++) write_color(output, host_buff[i]);
+    for (int i=0; i<NUM_PIXELS; i++) write_color(output, host_buff[i]);
     output.close();
+
     // cleanup
-    free_world<<<1,1>>>(WORLD_SIZE, world, node);
+    free_world<<<1,1>>>(WORLD_SIZE, node);
     cudaCheck(cudaGetLastError());
     cudaCheck(cudaDeviceSynchronize());
     cudaCheck(cudaFree(dev_buff));
     cudaCheck(cudaFree(rand_states));
-    cudaCheck(cudaFree(world));
+    cudaCheck(cudaFree(node));
+    cudaCheck(cudaFree(dev_earth_texture));
     cudaCheck(cudaEventDestroy(start));
     cudaCheck(cudaEventDestroy(stop));
 }
