@@ -1,6 +1,6 @@
 #include "hittable_list.cuh"
-__device__ hittable_list::hittable_list(hittable** objects, int size):objects(objects), size(size), last(0) {
-
+__device__ hittable_list::hittable_list(int size):size(size), last(0) {
+    objects = (hittable**)malloc(size);
 }
 __device__ bool hittable_list::hit(const ray& r, float t_min, float t_max, hit_record& record) const {
     hit_record temp_record;

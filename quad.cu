@@ -43,8 +43,7 @@ __device__ bool quad::is_interior(float a, float b, hit_record& record) const {
 }
 
 __device__ hittable_list* create_box(const point3& a, const point3& b, material* mat) {
-    hittable** list = (hittable**)malloc(6);
-    hittable_list* sides = new hittable_list(list, 6);
+    hittable_list* sides = new hittable_list(6);
     point3 min = point3(fmin(a.x(), b.x()), fmin(a.y(), b.y()), fmin(a.z(), b.z()));
     point3 max = point3(fmax(a.x(), b.x()), fmax(a.y(), b.y()), fmax(a.z(), b.z()));
     vec3 dx = vec3(max.x() - min.x(), 0, 0);
