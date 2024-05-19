@@ -48,6 +48,7 @@ int main() {
     // to handle recursion during BVH construction
     cudaDeviceSetLimit(cudaLimitStackSize, 8192);
 
+    // initialization
     const unsigned int WIDTH = 600;
     const unsigned int HEIGHT = 600;
     const unsigned int WORLD_SIZE = 8;
@@ -57,6 +58,10 @@ int main() {
     const float vfov = 40.0f;
     const unsigned int SAMPLES = 100;
     const int NUM_PIXELS = WIDTH*HEIGHT;
+    cudaEvent_t start;
+    cudaEvent_t stop;
+    cudaCheck(cudaEventCreate(&start));
+    cudaCheck(cudaEventCreate(&stop));
     camera cam(ASPECT_RATIO, WIDTH, lookfrom, lookat, vfov, SAMPLES);
 
     // query device
@@ -69,10 +74,6 @@ int main() {
     color* host_buff = (color*)malloc(NUM_PIXELS*sizeof(color));
     color* dev_buff;
     cudaCheck(cudaMalloc((void**)&dev_buff, NUM_PIXELS*sizeof(color)));
-    cudaEvent_t start;
-    cudaEvent_t stop;
-    cudaCheck(cudaEventCreate(&start));
-    cudaCheck(cudaEventCreate(&stop));
 
     dim3 blocks(2*SMs, 2*SMs);
     dim3 threads(32, 32);
