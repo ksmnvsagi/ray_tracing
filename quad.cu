@@ -41,6 +41,16 @@ __device__ bool quad::is_interior(float a, float b, hit_record& record) const {
     record.v = b;
     return true;
 }
+__device__ tri::tri(const point3& Q, const vec3& u, const vec3& v, material* mat):quad(Q, u, v, mat) {
+
+}
+__device__ bool tri::is_interior(float a, float b, hit_record& record) const {
+    if ((a < 0) || (b < 0) || (a + b > 1)) return false;
+
+    record.u = a;
+    record.v = b;
+    return true;
+}
 
 __device__ hittable_list* create_box(const point3& a, const point3& b, material* mat) {
     hittable_list* sides = new hittable_list(6);

@@ -52,7 +52,7 @@ int main() {
     const point3 lookat = point3(278, 278, 0);
     const point3 lookfrom = point3(278, 278, -800);
     const float vfov = 40.0f;
-    const unsigned int SAMPLES = 10;
+    const unsigned int SAMPLES = 100;
     const int NUM_PIXELS = WIDTH*HEIGHT;
     cudaEvent_t start;
     cudaEvent_t stop;
