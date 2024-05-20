@@ -15,6 +15,6 @@ private:
     const int bytes_per_pixel = 3;
     float* fdata;
     unsigned char* host_bdata;
-    unsigned char* dev_bdata;
+    unsigned char* dev_bdata; // this will be used by the device when querying for pixel color
     int bytes_per_line = 0;
 };

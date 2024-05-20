@@ -13,7 +13,7 @@ __device__ bool sphere::hit(const ray& r, float t_min, float t_max, hit_record& 
     float sqrtd = sqrt(discriminant);
     float root = (h-sqrtd)/a;
     if (root <= t_min || t_max <= root) {
-        root = (h+sqrtd) / a;
+        root = (h+sqrtd)/a;
         if (root <= t_min || t_max <= root) return false;
     }
     record.t = root;
@@ -29,7 +29,7 @@ __device__ aabb sphere::bounding_box() const {
     return bbox;
 }
 
-__device__ void sphere::get_uv(const point3 p, float& u, float& v) const {
+__device__ void sphere::get_uv(const point3& p, float& u, float& v) const {
     float theta = acos(-p.y());
     float phi = atan2(-p.z(), p.x()) + M_PI;
     u = phi/(2*M_PI);

@@ -8,26 +8,22 @@ __global__ void render(camera cam, color* buff, bvh** node, curandState* rand_st
         for (int x = threadIdx.x + blockIdx.x * blockDim.x; x<cam.image_width; x+=blockDim.x*gridDim.x) {
             int index = x + y*cam.image_width;
             curandState my_state = rand_states[index];
-            point3 pixel = (cam).pixel00 + x*(cam).delta_x + y*(cam).delta_y;
+            point3 pixel = cam.pixel00 + x*cam.delta_x + y*cam.delta_y;
             color final_color(0, 0, 0);
-            for (int i=0; i<(cam).num_samples; i++) {
-                vec3 ray_dir = pixel + 0.5f*(cam).delta_x * cudaRand(&my_state, -1, 1) +
-                               0.5f*(cam).delta_y*cudaRand(&my_state, -1, 1) - (cam).center;
-                ray r((cam).center,ray_dir);
-                final_color+=(cam).ray_color(r, *node, &my_state);
+            for (int i=0; i<cam.num_samples; i++) {
+                vec3 ray_dir = pixel + 0.5f*cam.delta_x * cudaRand(&my_state, -1, 1) +
+                               0.5f*cam.delta_y*cudaRand(&my_state, -1, 1) - cam.center;
+                ray r(cam.center,ray_dir);
+                final_color+=cam.ray_color(r, *node, &my_state);
             }
-            buff[index] = final_color/(float)(cam).num_samples;
+            buff[index] = final_color/(float)cam.num_samples;
         }
     }
 }
 
 __global__ void create_world(int size, bvh** node, image* img, curandState* rand_state) {
     if (threadIdx.x == 0 && blockIdx.x == 0) {
-//        global(size, node, rand_state);
-//        checker_spheres(size, node, rand_state);
-//        earth(size, world, img, rand_state);
-//        quads(size, world, rand_state);
-        empty_cornell(size, node, img, rand_state);
+        cornell(size, node, img, rand_state);
     }
 }
 
@@ -56,7 +52,7 @@ int main() {
     const point3 lookat = point3(278, 278, 0);
     const point3 lookfrom = point3(278, 278, -800);
     const float vfov = 40.0f;
-    const unsigned int SAMPLES = 100;
+    const unsigned int SAMPLES = 10;
     const int NUM_PIXELS = WIDTH*HEIGHT;
     cudaEvent_t start;
     cudaEvent_t stop;
@@ -86,11 +82,11 @@ int main() {
     // world creation (must be done on the GPU due to virtual functions)
     bvh** node;
     cudaCheck(cudaMalloc((void**)&node, sizeof(bvh*)));
-    image host_earth_texture("..\\earthmap.jpg");
-    image* dev_earth_texture;
-    cudaCheck(cudaMalloc((void**)&dev_earth_texture, sizeof(image)));
-    cudaCheck(cudaMemcpy(dev_earth_texture, &host_earth_texture, sizeof(image), cudaMemcpyHostToDevice));
-    create_world<<<1,1>>>(WORLD_SIZE, node, dev_earth_texture, rand_states);
+    image host_texture("..\\earthmap.jpg");
+    image* dev_texture;
+    cudaCheck(cudaMalloc((void**)&dev_texture, sizeof(image)));
+    cudaCheck(cudaMemcpy(dev_texture, &host_texture, sizeof(image), cudaMemcpyHostToDevice));
+    create_world<<<1,1>>>(WORLD_SIZE, node, dev_texture, rand_states);
 
     // render
     cudaCheck(cudaEventRecord(start));
@@ -116,7 +112,7 @@ int main() {
     cudaCheck(cudaFree(dev_buff));
     cudaCheck(cudaFree(rand_states));
     cudaCheck(cudaFree(node));
-    cudaCheck(cudaFree(dev_earth_texture));
+    cudaCheck(cudaFree(dev_texture));
     cudaCheck(cudaEventDestroy(start));
     cudaCheck(cudaEventDestroy(stop));
 }

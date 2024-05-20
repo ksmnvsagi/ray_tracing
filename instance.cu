@@ -57,7 +57,6 @@ __device__ bool rotate_y::hit(const ray& r, float t_min, float t_max, hit_record
     point3 p = record.p;
     p[0] = cos_theta*record.p[0] + sin_theta*record.p[2];
     p[2] = -sin_theta*record.p[0] + cos_theta*record.p[2];
-
     vec3 normal = record.normal;
     normal[0] = cos_theta*record.normal[0] + sin_theta*record.normal[2];
     normal[2] = -sin_theta*record.normal[0] + cos_theta*record.normal[2];

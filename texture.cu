@@ -42,5 +42,5 @@ __device__ color image_texture::value(float u, float v, const point3& p) const {
     const unsigned char* pixel = img.pixel(i,j);
 
     float color_scale = 1.0f / 255.0f;
-    return color(color_scale*pixel[0], color_scale*pixel[1], color_scale*pixel[2]);
+    return color{color_scale*pixel[0], color_scale*pixel[1], color_scale*pixel[2]};
 }

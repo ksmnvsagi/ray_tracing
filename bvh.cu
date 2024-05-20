@@ -15,28 +15,29 @@ __device__ bool box_z_compare(const hittable* a, const hittable* b) {
     return box_compare(a, b, 2);
 }
 
-__device__ bvh::bvh(hittable_list* world, curandState* rand_state):bvh(world, rand_state, 0, (world)->last) {
+__device__ bvh::bvh(hittable_list* world, curandState* rand_state):bvh(world, rand_state, 0, (  world)->last) {
 
 }
 __device__ bvh::bvh(hittable_list* world, curandState* rand_state, size_t start, size_t end) {
-    int axis = round(cudaRand(rand_state, 0, 2));
+    for (int i = start; i < end; i++) bbox = aabb(bbox, world->objects[i]->bounding_box());
+    int axis = bbox.longest_axis();
     auto comparator = (axis == 0) ? box_x_compare
                                   : (axis == 1) ? box_y_compare
                                                 : box_z_compare;
     size_t object_span = end - start;
     if (object_span == 1) {
-        left = *((world)->objects + start);
-        right = *((world)->objects + start);
+        left = *(world->objects + start);
+        right = *(world->objects + start);
     } else if (object_span == 2) {
-        left = *((world)->objects + start);
-        right = *((world)->objects + start+1);
+        left = *(world->objects + start);
+        right = *(world->objects + start+1);
     } else {
-        thrust::sort(((world)->objects + start), ((world)->objects + end), comparator);
+        thrust::device_ptr<hittable*> dev_ptr(world->objects);
+        thrust::sort(dev_ptr + start, dev_ptr + end, comparator);
         size_t mid = start + object_span/2;
         left = new bvh(world, rand_state, start, mid);
         right = new bvh(world, rand_state, mid, end);
     }
-    bbox = aabb(left->bounding_box(), right->bounding_box());
 }
 __device__ bool bvh::hit(const ray& r, float t_min, float t_max, hit_record& record) const {
     if (!bbox.hit(r, interval{t_min, t_max})) return false;

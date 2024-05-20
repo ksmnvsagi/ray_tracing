@@ -48,6 +48,12 @@ __host__ __device__ const interval& aabb::axis_interval(int n) const {
     if (n == 2) return z;
     return x;
 }
+__host__ __device__ int aabb::longest_axis() const {
+    if (x.size() > y.size())
+        return x.size() > z.size() ? 0 : 2;
+    else
+        return y.size() > z.size() ? 1 : 2;
+}
 __host__ __device__ bool aabb::hit(const ray& r, interval ray_t) const {
     const point3& ray_orig = r.orig();
     const vec3& ray_dir  = r.dir();
