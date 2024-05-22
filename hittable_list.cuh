@@ -9,7 +9,7 @@ public:
     __device__ void add(hittable* object);
 
     int last;
-    hittable** objects;
+    hittable** objects; // list of pointers to objects (due to polymorphism)
 private:
     int size;
     aabb bbox;

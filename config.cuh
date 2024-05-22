@@ -4,6 +4,7 @@
 #include <vector>
 #include <limits>
 #include <memory>
+#include <typeinfo>
 #define _USE_MATH_DEFINES
 #include <cmath>
 #include <curand_kernel.h>

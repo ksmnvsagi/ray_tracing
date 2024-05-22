@@ -19,6 +19,7 @@ __host__ image::image(const char* file) {
     for (int i=0; i < total_bytes; i++, fptr++, bptr++) *bptr = to_byte(*fptr);
     cudaCheck(cudaMalloc((void**)&dev_bdata, total_bytes));
     cudaCheck(cudaMemcpy(dev_bdata, host_bdata, total_bytes, cudaMemcpyHostToDevice));
+    delete[] host_bdata;
 }
 __device__ unsigned char* image::pixel(int x, int y) const {
     x = pixel_clamp(x, 0, image_width);

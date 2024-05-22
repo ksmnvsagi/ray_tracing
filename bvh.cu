@@ -15,11 +15,13 @@ __device__ bool box_z_compare(const hittable* a, const hittable* b) {
     return box_compare(a, b, 2);
 }
 
-__device__ bvh::bvh(hittable_list* world, curandState* rand_state):bvh(world, rand_state, 0, (  world)->last) {
+__device__ bvh::bvh(hittable_list* world):bvh(world, 0, (  world)->last) {
 
 }
-__device__ bvh::bvh(hittable_list* world, curandState* rand_state, size_t start, size_t end) {
-    for (int i = start; i < end; i++) bbox = aabb(bbox, world->objects[i]->bounding_box());
+__device__ bvh::bvh(hittable_list* world, size_t start, size_t end) {
+    for (int i = start; i < end; i++) {
+        bbox = aabb(bbox, world->objects[i]->bounding_box());
+    }
     int axis = bbox.longest_axis();
     auto comparator = (axis == 0) ? box_x_compare
                                   : (axis == 1) ? box_y_compare
@@ -35,8 +37,8 @@ __device__ bvh::bvh(hittable_list* world, curandState* rand_state, size_t start,
         thrust::device_ptr<hittable*> dev_ptr(world->objects);
         thrust::sort(dev_ptr + start, dev_ptr + end, comparator);
         size_t mid = start + object_span/2;
-        left = new bvh(world, rand_state, start, mid);
-        right = new bvh(world, rand_state, mid, end);
+        left = new bvh(world, start, mid);
+        right = new bvh(world, mid, end);
     }
 }
 __device__ bool bvh::hit(const ray& r, float t_min, float t_max, hit_record& record) const {
