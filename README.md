@@ -13,6 +13,10 @@ same ray tracer.
 ### Cornell Box with a glass ball (1000 rays per pixel, 600x600):
 ![image](https://github.com/ksmnvsagi/ray_tracing/assets/169926151/16dbd077-1b1d-475f-85d8-3d2fcc55c2bc)
 
+### Cornell Box with a model of a cow (720 primitives, 1000 rays per pixel, 600x600):
+![image (1)](https://github.com/ksmnvsagi/ray_tracing/assets/169926151/c51e809a-f625-40e9-9763-b248339dd1e1)
+
+
 ### Diffuse (Lambertian), dielectric and metal materials (100 rays per pixel, 1200x800)
 ![image-_1_](https://github.com/ksmnvsagi/ray_tracing/assets/169926151/3ec01a65-2c2a-4e22-b7bc-685253603b1d)
 
