@@ -23,4 +23,3 @@ same ray tracer.
 ### TODO:
 - Parallelize the application by introducing multiple CUDA streams
 - Exploit shared memory and constant memory in CUDA to achieve greater speed up
-- Implement support for object loading (triangles already supported!)
